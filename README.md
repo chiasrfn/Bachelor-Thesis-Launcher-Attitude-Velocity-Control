@@ -1,1 +1,1 @@
-# Bachelor-Thesis-Launcher-Attitude-Velocity-Control
+# Launcher-Attitude-Velocity-Control
