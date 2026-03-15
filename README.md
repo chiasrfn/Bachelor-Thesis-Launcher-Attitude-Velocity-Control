@@ -16,6 +16,7 @@ The system is modeled as a rigid body with 9 degrees of freedom. Due to the inhe
   - `initialization.m`: The main script to initialize all parameters and controller gains.
   - `plot_results.m`: Script to generate high-quality plots from simulation data.
 - `figures/`: A collection of representative results from the simulations.
+- `thesis/`:The final thesis in italian
 
 ## Requirements
 - **MATLAB R2024a** or newer.
@@ -32,33 +33,45 @@ The controllers were tested under various conditions, including:
 - Wind disturbances (up to 50 m/s).
 - Variable atmospheric environments and real motor thrust profiles.
 
-## Control Strategies Comparison
+# Summary of Control Strategies for the Ares I Launcher
 
-[cite_start]The project evaluates different architectures to manage the trade-off between response speed, precision, and physical feasibility[cite: 101, 102].
+This document summarizes the control strategies designed for the stabilization of a non-flexible launcher, based on the mathematical models and simulations provided in this project.
 
-### 1. Attitude Control (Pitch & Yaw)
-[cite_start]Two main approaches were compared for the pitch and yaw axes[cite: 2344]:
+## 1. Roll Controller (RCS)
+* **Structure:** The controller $G_{roll_2}(s)$ is a PID with a filter applied to the derivative action.
+* **Objective:** It is designed to stabilize the roll angle ($\chi$) and angular velocity ($p$).
+* **Constraints:** It operates within a control effort limit of $10^4$ Nm.
+* **Performance:** The controller successfully returns the angle to zero after a 1-degree offset, ensuring the independence of the yaw and pitch axes.
 
-| Feature | [cite_start]Frequency-based ($G_{cf}$) [cite: 653] | [cite_start]PID Controller ($PID_{yaw}$) [cite: 465] |
+## 2. PID Controller (Yaw and Pitch)
+* **Logic:** Applied to both axes due to their identical transfer functions when only angles are considered as outputs.
+* **Design:** The final version, $G_{pid_3}(s)$, was obtained empirically by increasing derivative action to stabilize the system and reducing integral action to limit oscillations.
+* **Performance:** It provides a very fast response with negligible steady-state error and overshoot.
+* **Control Effort:** It requires a high initial effort that can lead to actuator saturation for brief periods (approx. 0.20s - 0.75s).
+
+## 3. Frequency-Based Controller
+* **Methodology:** Designed using the Root Locus method to tailor the response to the specific process dynamics.
+* **Design:** The chosen configuration $G_{cf_3}(s)$ uses a specific pole-zero placement to ensure closed-loop poles remain in the negative half-plane with minimal complexity.
+* **Performance:** It is more precise and requires less control effort than the PID, although the response is slightly slower.
+
+## 4. Velocity Controller
+* **Implementation:** A PID controller ($G_{v_3}$) that acts on the system already stabilized by an attitude controller ($G_a$).
+* **Capability:** It is designed to track vertical and horizontal velocity references, including those expressed in the inertial frame using the $R^{BI}$ rotation matrix.
+* **Critical Conclusion:** While the controller tracks references effectively in simulation, the required control effort is often excessive and deemed not fully realizable in real-world conditions.
+
+---
+
+## Conclusion and Comparison
+
+| Feature | PID Controller | Frequency Controller ($G_{cf}$) |
 | :--- | :--- | :--- |
-| **Design Method** | [cite_start]Root Locus tailoring [cite: 662] | [cite_start]Empirical tuning [cite: 466] |
-| **Response Speed** | [cite_start]Slower [cite: 829] | [cite_start]Faster [cite: 2345] |
-| **Precision** | [cite_start]Higher (lower steady-state error) [cite: 829, 2345] | Slightly lower |
-| **Control Effort** | [cite_start]Lower/More efficient [cite: 832, 2345] | [cite_start]Higher (risk of saturation) [cite: 647] |
+| **Response Time** | Faster | Slower |
+| **Precision** | High | Very High (more precise) |
+| **Effort Efficiency** | Lower efficiency; higher saturation risk | Higher efficiency; lower effort required |
+| **Design Approach** | Empirical / Trial-and-error | Analytical / Root Locus |
 
-### 2. Roll Control
-* [cite_start]**Criticality**: Roll stabilization is vital because any angular velocity along the roll axis ($p$) couples pitch and yaw dynamics, breaking their independence[cite: 272, 1291].
-* [cite_start]**Strategy**: A filtered PID ($G_{roll_2}$) was implemented to ensure rapid stabilization within the structural torque limit of $10^4$ Nm[cite: 286, 376, 427].
+**Final Assessment:** Both attitude controllers meet the design specifications. The **PID** is preferred for missions requiring rapid maneuvers, while the **Frequency-Based** controller is superior for precision and energy efficiency. The **Velocity Controller** serves as a valid theoretical baseline but requires further optimization to respect physical actuator limits.
 
-### 3. Velocity Control ($G_v$)
-* [cite_start]**Implementation**: An outer-loop PID was designed to manage the vehicle's velocity vector[cite: 859, 875].
-* [cite_start]**Tracking**: The controller demonstrates high accuracy in tracking references, including those converted from the inertial frame via the $R^{BI}$ rotation matrix[cite: 1192, 1197, 2210].
-* [cite_start]**Feasibility**: While theoretically effective, the current implementation is deemed **unfeasible** for real-world deployment because the control effort frequently exceeds physical actuator limits during complex maneuvers[cite: 1087, 2148, 2346].
-
-## Future Developments
-* [cite_start]**Propellant Dynamics**: Modeling liquid propellant "sloshing" effects[cite: 2349].
-* [cite_start]**Environment**: Transitioning from a flat-Earth model to a curved-Earth model for high-altitude flight[cite: 145, 2351].
-* [cite_start]**Non-linear Control**: Implementing non-linear control laws to increase robustness in conditions far from the equilibrium point[cite: 2354].
 ## Author
 **Chiara Serafini**
 Bachelor's Degree in Computer Engineering and Automation - Sapienza University of Rome.
